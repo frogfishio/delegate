@@ -1,0 +1,77 @@
+system:
+  id: delegate_service
+  listen: 0.0.0.0
+  port: 8000
+  salt: delegate-service-salt
+
+  log:
+    level: debug
+
+memory:
+  type: redis
+  model: direct
+  host: localhost
+  port: 6379
+
+db:
+  type: mongo
+  name: delegate_service_test
+  host: localhost
+
+cache:
+  type: local
+  ttl: 60
+
+user:
+  defaultRole: member
+  adminRole: admin
+  passwordLength: 6
+  meta:
+    name:
+      mandatory: true,
+      message: Missing name
+    username:
+      mandatory: false
+    avatar:
+      mandatory: false
+
+  users:
+    - email: testadmin@frogfish.io
+      password: testpassword
+      roles:
+        - admin
+    - email: test@frogfish.io
+      password: testpassword
+      roles:
+        - member
+
+roles:
+  admin:
+    name: Administrator
+    permissions:
+      - admin
+      - member
+      - read_roles
+      - create_roles
+      - modify_roles
+      - delete_roles
+  member:
+    name: Member
+    permissions:
+      - member
+      - read_assignable_roles
+
+auth:
+  bearerTokenTTL: 3600 # default = 3600
+  # authenticator: project-authenticator
+
+registry:
+  services:
+    delegate:
+      name: Delegate service
+      specs:
+        - /service/delegate.yaml
+      handlers:
+        - /build/debug/src/handlers
+      configuration:
+        slug: true

@@ -1,0 +1,215 @@
+swagger: '2.0'
+info:
+  title: Role service
+  description: Service that manages roles
+  version: 1.0.0
+host: localhost
+schemes:
+  - https
+basePath: /v1
+produces:
+  - application/json
+paths:
+  /roles:
+    get:
+      summary: Get all roles
+      description: |
+        Gets all roles
+      tags:
+        - Role
+      responses:
+        '200':
+          description: An array of roles
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Role'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+        - role_auth:
+            - 'read_roles'
+  /roles/assignable:
+    get:
+      summary: Get assignable roles
+      description: |
+        Gets all assignable roles for a user
+      tags:
+        - Role
+      responses:
+        '200':
+          description: An array of roles
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Role'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+        - role_auth:
+            - 'read_assignable_roles'
+  /roles/import:
+    post:
+      summary: Imports roles
+      description: |
+        Creates or replaces the roles in bulk
+      tags:
+        - Role
+      responses:
+        '200':
+          description: An array of roles
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Role'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+        - role_auth:
+            - 'import_roles'
+  /role:
+    post:
+      summary: Creates a role
+      description: |
+        Creates a new role
+      consumes: 
+        - application/x-www-form-urlencoded
+      tags:
+        - Role
+      responses:
+        '200':
+          description: Success result
+          schema:
+            $ref: '#/definitions/Success'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+        - role_auth:
+            - 'create_roles'
+  /role/{id}:
+    get:
+      summary: Returns role
+      description: |
+        Returns role
+      parameters:
+        - name: id
+          in: path
+          description: Role id
+          required: true
+          type: string
+      tags:
+        - Role
+      responses:
+        '200':
+          description: Role data
+          schema:
+            $ref: '#/definitions/Role'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+        - role_auth:
+            - 'read_roles'
+    patch:
+      summary: Updates a role
+      description: |
+        Updates a role
+      parameters:
+        - name: id
+          in: path
+          description: Role identifier
+          required: true
+          type: string
+      tags:
+        - Role
+      responses:
+        '200':
+          description: Success result
+          schema:
+            $ref: '#/definitions/Success'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+        - role_auth:
+            - 'modify_roles'
+    delete:
+      summary: Deletes role
+      description: |
+        Deletes role
+      parameters:
+        - name: id
+          in: path
+          description: Project identifier
+          required: true
+          type: string
+      tags:
+        - Role
+      responses:
+        '200':
+          description: Success result
+          schema:
+            $ref: '#/definitions/Success'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+      security:
+        - role_auth:
+            - 'delete_roles'
+definitions:
+  Role:
+    properties:
+      _uuid:
+        type: string
+        format: uuid.v4
+        description: >-
+          Unique identifier representing a specific role
+      parent:
+        type: string
+        format: uuid.v4
+        description: >-
+          Unique identifier of a parent role if exsiting
+      name:
+        type: string
+        description: Role name
+      code:
+        type: string
+        description: Role code, lowercase alphanumeric, no spaces or special characters
+      status:
+        type: string
+        description: Set to active for active role
+      description:
+        type: string
+        description: Text description of the role
+  Success:
+     properties:
+      id:
+        type: string
+        format: uuid.v4
+        description: >-
+          Successful response returns id of the object
+          operated on
+  Error:
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      fields:
+        type: string
+securityDefinitions:
+  role_auth:
+    type: basic
+    

@@ -1,0 +1,31 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-node@v1.1.0
+    - uses: actions/checkout@v1
+    - name: Cleanup
+      run: rm -rf ~/.npm
+    - name: Cleanup 2
+      run: npm cache clean --force
+    - name: Cleanup 3
+      run: rm -rf node_modules package-lock.json
+    - name: Install packages
+      run: npm install --no-bin-links
+    - run: mkdir -p build/release
+    - name: build service
+      run: npm run build
+    - name: PWD
+      run: pwd
+    - name: LS
+      run: ls -lasi
+    - name: Publish to Registry
+      uses: HurricanKai/Publish-Docker-Github-Action@master
+      with:
+        name: frogfishio/delegate
+        username: frogfishio
+        password: ${{ secrets.DOCKERHUB_SECRET }}

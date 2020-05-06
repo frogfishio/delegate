@@ -1,0 +1,32 @@
+###########################################
+# Role service
+###########################################
+
+system:
+  id: test
+  listen: 0.0.0.0
+  port: 8000
+  root: /app
+  salt: change-for-production
+
+memory:
+  type: redis
+  model: direct
+  host: localhost
+  port: 6379
+
+db:
+  type: mongo
+  host: localhost
+
+auth:
+  bearerTokenTTL: 3600 # default
+
+registry:
+  services:
+    role-service:
+      name: Role service
+      specs:
+        - /role.yaml
+      handlers:
+        - /handlers

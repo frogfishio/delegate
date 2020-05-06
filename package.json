@@ -1,0 +1,40 @@
+{
+  "name": "@frogfish/delegate",
+  "version": "1.0.0",
+  "description": "Delegate Service for Frogfish Engine",
+  "main": "gulpfile.js",
+  "scripts": {
+    "test": "DEBUG=engine*,service:* ENGINE_SYSTEM_ROOT=$PWD mocha --exit --recursive build/debug/test/delegate",
+    "watch": "gulp prepare-debug; tsc -w",
+    "start": "mkdir -p build/debug/src; cp src/services/role.yaml build/debug/src; DEBUG=engine*,svc:*  tsc-watch --onSuccess \"node node_modules/@frogfish/kona/engine -c service.yaml --root $PWD/build/debug/src\"",
+    "build": "gulp build",
+    "clean-build": "gulp clean; gulp build",
+    "dist": "npm version patch; gulp clean; gulp build; cd build/release; npm publish --access public; git push origin master"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/frogfishio/role.git"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/frogfishio/role/issues"
+  },
+  "homepage": "https://github.com/frogfishio/role#readme",
+  "dependencies": {
+    "@frogfish/kona": "^2.1.12"
+  },
+  "devDependencies": {
+    "@types/mocha": "^7.0.2",
+    "@types/node": "^13.13.5",
+    "chai": "^4.2.0",
+    "chai-like": "^1.1.1",
+    "chai-things": "^0.2.0",
+    "del": "^5.1.0",
+    "gulp": "^4.0.2",
+    "gulp-typescript": "^5.0.1",
+    "mkdirp": "^0.5.5",
+    "mocha": "^7.1.2",
+    "typescript": "^3.8.3"
+  }
+}
