@@ -10,16 +10,16 @@ basePath: /v1
 produces:
   - application/json
 paths:
-  /roles:
+  /delegates:
     get:
-      summary: Get all roles
+      summary: Get all delegates
       description: |
-        Gets all roles
+        Gets all delegates
       tags:
         - Role
       responses:
         '200':
-          description: An array of roles
+          description: An array of delegates
           schema:
             type: array
             items:
@@ -31,54 +31,12 @@ paths:
       security:
         - role_auth:
             - 'read_roles'
-  /roles/assignable:
-    get:
-      summary: Get assignable roles
-      description: |
-        Gets all assignable roles for a user
-      tags:
-        - Role
-      responses:
-        '200':
-          description: An array of roles
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/Role'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-        - role_auth:
-            - 'read_assignable_roles'
-  /roles/import:
+  /delegate:
     post:
-      summary: Imports roles
-      description: |
-        Creates or replaces the roles in bulk
-      tags:
-        - Role
-      responses:
-        '200':
-          description: An array of roles
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/Role'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-      security:
-        - role_auth:
-            - 'import_roles'
-  /role:
-    post:
-      summary: Creates a role
+      summary: Creates a delegate
       description: |
         Creates a new role
-      consumes: 
+      consumes:
         - application/x-www-form-urlencoded
       tags:
         - Role
@@ -94,7 +52,31 @@ paths:
       security:
         - role_auth:
             - 'create_roles'
-  /role/{id}:
+  /delegate/activate/{code}:
+    get:
+      summary: Creates a delegate
+      description: |
+        Creates a new role
+      parameters:
+        - name: code
+          in: path
+          description: Activation code
+          required: true
+          type: string
+      consumes:
+        - application/x-www-form-urlencoded
+      tags:
+        - Role
+      responses:
+        '200':
+          description: Success result
+          schema:
+            $ref: '#/definitions/Success'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /delegate/{id}:
     get:
       summary: Returns role
       description: |
@@ -193,7 +175,7 @@ definitions:
         type: string
         description: Text description of the role
   Success:
-     properties:
+    properties:
       id:
         type: string
         format: uuid.v4
@@ -212,4 +194,3 @@ definitions:
 securityDefinitions:
   role_auth:
     type: basic
-    

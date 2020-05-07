@@ -17,11 +17,19 @@ describe('Role service', function () {
     permissions: ['one', 'two', 'three'],
   };
 
+  const ALT_TEST_ROLE = {
+    code: 'alt_test_role_' + TIME,
+    name: 'Alt Test Role ' + TIME,
+    permissions: ['four', 'five', 'six'],
+  };
+
   let adminToken;
   let testRoleId;
-  let testScopedRoleId;
+  let altTestRoleId;
+  let testDelegateId;
   let testUserId;
   let testUserData;
+  let activationCode;
   let token;
 
   beforeEach(async () => {
@@ -37,35 +45,44 @@ describe('Role service', function () {
       ).access_token;
   });
 
-  describe('Roles', function () {
-    it('should create role', async () => {
-      expect((testRoleId = (await request.post(`${API}/role`, TEST_ROLE, adminToken)).id))
+  describe('Delegates', function () {
+    it('should create a test role', async () => {
+      testRoleId = (await engine.role.create(TEST_ROLE)).id;
+    });
+
+    it('should create alternative test role', async () => {
+      altTestRoleId = (await engine.role.create(ALT_TEST_ROLE)).id;
+    });
+
+    it('should create a delegate with a test role', async () => {
+      expect(
+        (testDelegateId = (
+          await request.post(
+            `${API}/delegate`,
+            {
+              email: 'test@test.test',
+              scope: 'test-scope',
+              roles: [testRoleId],
+            },
+            adminToken
+          )
+        ).id)
+      )
         .to.be.a('string')
         .with.length(36);
     });
 
-    it('should return the created role', async () => {
-      const result = await request.get(`${API}/role/${testRoleId}`, null, adminToken);
-      expect(result).to.have.property('_uuid').which.equals(testRoleId);
+    it('should return the created delegate', async () => {
+      const result = await request.get(`${API}/delegate/${testDelegateId}`, null, adminToken);
+      expect(result).to.have.property('_uuid').which.equals(testDelegateId);
+      console.log(`!delegate ---> ${JSON.stringify(result, null, 2)}`);
+      activationCode = result.code;
     });
 
-    it('should return array of roles', async () => {
-      const result = await request.get(`${API}/roles`, { _uuid: testRoleId }, adminToken);
+    it('should return array of delegates', async () => {
+      const result = await request.get(`${API}/delegates`, { _uuid: testDelegateId }, adminToken);
       expect(result).to.be.instanceof(Array).with.length(1);
-      expect(result[0]).to.have.property('_uuid').which.equals(testRoleId);
-    });
-
-    it('should update role', async () => {
-      expect(await request.patch(`${API}/role/${testRoleId}`, { permissions: ['four', 'five', 'six'] }, adminToken))
-        .to.have.property('id')
-        .with.length(36)
-        .which.equal(testRoleId);
-    });
-
-    it('should return updated role', async () => {
-      const result = await request.get(`${API}/role/${testRoleId}`, null, adminToken);
-      expect(result).to.have.property('_uuid').which.equals(testRoleId);
-      expect(result).to.have.property('permissions').which.has.all.members(['four', 'five', 'six']);
+      expect(result[0]).to.have.property('_uuid').which.equals(testDelegateId);
     });
 
     it('should create test user', async () => {
@@ -78,12 +95,6 @@ describe('Role service', function () {
       expect(testUserId).to.be.a('string').with.length(36);
     });
 
-    it('should add role to user', async () => {
-      expect(await engine.user.addRoleToUser(testUserId, testRoleId))
-        .to.have.property('id')
-        .which.equals(testUserId);
-    });
-
     it('get test user data', async () => {
       token = (
         await engine.auth.authenticate({
@@ -94,55 +105,17 @@ describe('Role service', function () {
       ).access_token;
 
       testUserData = await engine.auth.resolve(`Bearer ${token}`);
-      expect(testUserData)
-        .to.have.property('permissions')
-        .which.has.all.members(['member', 'read_assignable_roles', 'four', 'five', 'six']);
+      expect(testUserData).to.have.property('permissions').which.has.all.members(['member', 'read_assignable_roles']);
     });
 
-    it('should return the created role', async () => {
-      const result = await request.get(`${API}/roles/assignable`, null, token);
-      expect(result).to.be.instanceof(Array).with.length(0);
+    it('should activate delegate using code', async () => {
+      const result = await request.get(`${API}/delegate/activate/${activationCode}`, { _uuid: testDelegateId }, token);
+      console.log(`!result ---> ${JSON.stringify(result, null, 2)}`);
+      expect(result).to.have.property('id').which.equals(testDelegateId);
     });
 
-    it('should make role assignable', async () => {
-      expect(await request.patch(`${API}/role/${testRoleId}`, { type: 'assignable' }, adminToken))
-        .to.have.property('id')
-        .with.length(36)
-        .which.equal(testRoleId);
-    });
-
-    it('should return the created role', async () => {
-      const result = await request.get(`${API}/roles/assignable`, null, token);
-      console.log(`!roles ---------------------------> ${JSON.stringify(result, null, 2)}`);
-      expect(result).to.be.instanceof(Array).with.length(1);
-    });
-
-    it('should create another role', async () => {
-      expect(
-        (testScopedRoleId = (
-          await request.post(
-            `${API}/role`,
-            {
-              code: 'scoped_test_role_' + TIME,
-              name: 'Scoped Test Role ' + TIME,
-              permissions: ['seven', 'eight', 'nine'],
-            },
-            adminToken
-          )
-        ).id)
-      )
-        .to.be.a('string')
-        .with.length(36);
-    });
-
-    it('should add scoped to user', async () => {
-      expect(await engine.user.addRoleToUser(testUserId, testScopedRoleId, 'test-scope'))
-        .to.have.property('id')
-        .which.equals(testUserId);
-    });
-
-    it('get modified user data', async () => {
-      const token = (
+    it('get test user data with new grants', async () => {
+      token = (
         await engine.auth.authenticate({
           grant_type: 'password',
           email: `testuser${TIME}@frogfish.io`,
@@ -151,34 +124,33 @@ describe('Role service', function () {
       ).access_token;
 
       testUserData = await engine.auth.resolve(`Bearer ${token}`);
-
+      console.log(`!userdata --> ${JSON.stringify(testUserData, null, 2)}`);
       expect(testUserData)
         .to.have.property('permissions')
         .which.has.property('global')
-        .which.has.all.members(['member', 'read_assignable_roles', 'four', 'five', 'six']);
-
+        .which.has.all.members(['member', 'read_assignable_roles']);
       expect(testUserData)
         .to.have.property('permissions')
         .which.has.property('test-scope')
-        .which.has.all.members(['seven', 'eight', 'nine']);
+        .which.has.all.members(['one', 'two', 'three']);
     });
 
-    it('should delete scoped role', async () => {
-      expect(await request.del(`${API}/role/${testScopedRoleId}`, null, adminToken))
-        .to.have.property('id')
-        .which.equals(testScopedRoleId);
+    it('should add a new role to delegate', async () => {
+      const result = await request.patch(
+        `${API}/delegate/${testDelegateId}`,
+        { roles: [testRoleId, altTestRoleId] },
+        adminToken
+      );
+      expect(result).to.have.property('id').which.equals(testDelegateId);
     });
 
-    it('should fail getting deleted scoped role', async () => {
-      try {
-        expect(await request.get(`${API}/role/${testScopedRoleId}`, {}, adminToken)).to.not.exist();
-      } catch (err) {
-        expect(err.error).to.equals('not_found');
-      }
+    it('should return modified delegate', async () => {
+      const result = await request.get(`${API}/delegate/${testDelegateId}`, {}, adminToken);
+      expect(result).to.have.property('roles').which.has.all.members([testRoleId, altTestRoleId]);
     });
 
-    it('get modified user data after role deletion', async () => {
-      const token = (
+    it('shoult return updated permissions', async () => {
+      token = (
         await engine.auth.authenticate({
           grant_type: 'password',
           email: `testuser${TIME}@frogfish.io`,
@@ -187,34 +159,24 @@ describe('Role service', function () {
       ).access_token;
 
       testUserData = await engine.auth.resolve(`Bearer ${token}`);
-
-      console.log(`!testuserdata ======> ${JSON.stringify(testUserData, null, 2)}`);
+      console.log(`!userdata --> ${JSON.stringify(testUserData, null, 2)}`);
       expect(testUserData)
         .to.have.property('permissions')
-        .which.has.all.members(['member', 'read_assignable_roles', 'four', 'five', 'six']);
+        .which.has.property('global')
+        .which.has.all.members(['member', 'read_assignable_roles']);
+      expect(testUserData)
+        .to.have.property('permissions')
+        .which.has.property('test-scope')
+        .which.has.all.members(['one', 'two', 'three', 'four', 'five', 'six']);
     });
 
-    it('should return global role', async () => {
-      const result = await request.get(`${API}/role/${testRoleId}`, null, adminToken);
-      expect(result).to.have.property('_uuid').which.equals(testRoleId);
+    it('remove add a  role from delegate', async () => {
+      const result = await request.patch(`${API}/delegate/${testDelegateId}`, { roles: [altTestRoleId] }, adminToken);
+      expect(result).to.have.property('id').which.equals(testDelegateId);
     });
 
-    it('should delete global role', async () => {
-      expect(await request.del(`${API}/role/${testRoleId}`, null, adminToken))
-        .to.have.property('id')
-        .which.equals(testRoleId);
-    });
-
-    it('should fail getting deleted global role', async () => {
-      try {
-        expect(await request.get(`${API}/role/${testRoleId}`, {}, adminToken)).to.not.exist();
-      } catch (err) {
-        expect(err.error).to.equals('not_found');
-      }
-    });
-
-    it('get modified user data after role deletion', async () => {
-      const token = (
+    it('shoult return permissions with role removed', async () => {
+      token = (
         await engine.auth.authenticate({
           grant_type: 'password',
           email: `testuser${TIME}@frogfish.io`,
@@ -223,8 +185,41 @@ describe('Role service', function () {
       ).access_token;
 
       testUserData = await engine.auth.resolve(`Bearer ${token}`);
+      console.log(`!userdata --> ${JSON.stringify(testUserData, null, 2)}`);
+      expect(testUserData)
+        .to.have.property('permissions')
+        .which.has.property('global')
+        .which.has.all.members(['member', 'read_assignable_roles']);
+      expect(testUserData)
+        .to.have.property('permissions')
+        .which.has.property('test-scope')
+        .which.has.all.members(['four', 'five', 'six']);
+    });
 
-      console.log(`!testuserdata ======> ${JSON.stringify(testUserData, null, 2)}`);
+    it('should remove a delegate and its roles', async () => {
+      const result = await request.del(`${API}/delegate/${testDelegateId}`, {}, adminToken);
+      expect(result).to.have.property('id').which.equals(testDelegateId);
+    });
+
+    it('should fail getting deleted delegate', async () => {
+      try {
+        expect(await request.get(`${API}/delegate/${testDelegateId}`, {}, adminToken)).to.not.exist();
+      } catch (err) {
+        expect(err.error).to.equals('not_found');
+      }
+    });
+
+    it('shoult return permissions delegate roles removed', async () => {
+      token = (
+        await engine.auth.authenticate({
+          grant_type: 'password',
+          email: `testuser${TIME}@frogfish.io`,
+          password: 'testpassword',
+        })
+      ).access_token;
+
+      testUserData = await engine.auth.resolve(`Bearer ${token}`);
+      console.log(`!userdata --> ${JSON.stringify(testUserData, null, 2)}`);
       expect(testUserData).to.have.property('permissions').which.has.all.members(['member', 'read_assignable_roles']);
     });
   });
