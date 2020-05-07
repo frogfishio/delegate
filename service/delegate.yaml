@@ -30,7 +30,7 @@ paths:
             $ref: '#/definitions/Error'
       security:
         - role_auth:
-            - 'read_roles'
+            - 'read_delegates'
   /delegate:
     post:
       summary: Creates a delegate
@@ -51,7 +51,7 @@ paths:
             $ref: '#/definitions/Error'
       security:
         - role_auth:
-            - 'create_roles'
+            - 'create_delegates'
   /delegate/activate/{code}:
     get:
       summary: Creates a delegate
@@ -100,7 +100,7 @@ paths:
             $ref: '#/definitions/Error'
       security:
         - role_auth:
-            - 'read_roles'
+            - 'read_delegates'
     patch:
       summary: Updates a role
       description: |
@@ -124,7 +124,7 @@ paths:
             $ref: '#/definitions/Error'
       security:
         - role_auth:
-            - 'modify_roles'
+            - 'modify_delegates'
     delete:
       summary: Deletes role
       description: |
@@ -148,7 +148,7 @@ paths:
             $ref: '#/definitions/Error'
       security:
         - role_auth:
-            - 'delete_roles'
+            - 'delete_delegates'
 definitions:
   Role:
     properties:

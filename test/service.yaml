@@ -51,10 +51,10 @@ roles:
     permissions:
       - admin
       - member
-      - read_roles
-      - create_roles
-      - modify_roles
-      - delete_roles
+      - read_delegates
+      - create_delegates
+      - modify_delegates
+      - delete_delegates
   member:
     name: Member
     permissions:
