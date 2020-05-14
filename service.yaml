@@ -27,6 +27,6 @@ registry:
     role-service:
       name: Role service
       specs:
-        - /role.yaml
+        - /delegate.yaml
       handlers:
         - /handlers
