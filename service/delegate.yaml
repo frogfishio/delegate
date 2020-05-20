@@ -76,6 +76,9 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - role_auth:
+            - 'member'
   /delegate/{id}:
     get:
       summary: Returns role
