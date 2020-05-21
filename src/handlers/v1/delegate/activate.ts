@@ -5,10 +5,12 @@ const error = require('@frogfish/kona/error');
 
 export default class DelegateActivationHandler {
   private _api;
+  private _util;
 
   constructor(private _engine: Engine, private _user) {
     logger = _engine.log.log('service:delegate:activation');
     this._api = _engine.delegate;
+    this._util = require('@frogfish/kona/util');
   }
 
   async get(req, res, next) {
@@ -16,7 +18,7 @@ export default class DelegateActivationHandler {
     try {
       return res.json(await this._api.activate(this._user.id, req.path.split('/')[4]));
     } catch (err) {
-      error.send(err, res);
+      this._util.error(err, res, logger, 'svc_delegate_act');
     }
   }
 }
