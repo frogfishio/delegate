@@ -6,6 +6,7 @@
 !gulpfile.js
 !.gitignore
 !.github
+!.devcontainer
 
 /dist/
 node_modules
