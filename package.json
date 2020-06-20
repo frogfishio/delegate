@@ -9,7 +9,7 @@
     "start": "mkdir -p build/debug/src; cp src/services/role.yaml build/debug/src; DEBUG=engine*,svc:*  tsc-watch --onSuccess \"node node_modules/@frogfish/kona/engine -c service.yaml --root $PWD/build/debug/src\"",
     "build": "gulp build",
     "clean-build": "gulp clean; gulp build",
-    "dist": "npm version patch; gulp clean; gulp build; cd build/release; npm publish --access public; git push origin master"
+    "dist": "npm version patch && cat package.json | jq -r .version > latest && git add latest && git commit -m $(cat latest) && gulp clean && gulp build; cd build/release; npm publish --access public; git push origin master"
   },
   "repository": {
     "type": "git",
