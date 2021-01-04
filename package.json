@@ -1,6 +1,6 @@
 {
   "name": "@frogfish/delegate",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "Delegate Service for Frogfish Engine",
   "main": "gulpfile.js",
   "scripts": {
